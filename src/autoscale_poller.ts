@@ -65,15 +65,18 @@ export default class AutoscalePoller {
     async requestShutdownStatus(): Promise<boolean> {
         // TODO: actually poll
         try {
-            const response = await got(this.pollUrl, {
+            const response = await got.post(this.pollUrl, {
                 headers: {
                     Authorization: `Bearer ${this.authToken()}`,
                 },
+                json: this.instanceDetails,
             });
 
             if (response.body) {
                 const shutdownStatus = JSON.parse(response.body);
+                logger.debug('Received response', { shutdownStatus });
                 if (shutdownStatus.shutdown) {
+                    logger.info('Received shutdown status');
                     return true;
                 }
             }

@@ -6,24 +6,39 @@ dotenv.config();
 const env = envalid.cleanEnv(process.env, {
     PORT: envalid.num({ default: 6000 }),
     LOG_LEVEL: envalid.str({ default: 'info' }),
-    POLLING_INTERVAL: envalid.num({ default: 60 }),
+    SHUTDOWN_POLLING_INTERVAL: envalid.num({ default: 60 }),
+    STATS_POLLING_INTERVAL: envalid.num({ default: 60 }),
     GRACEFUL_SHUTDOWN_SCRIPT: envalid.str({ default: '/usr/local/bin/graceful_shutdown.sh' }),
     TERMINATE_SCRIPT: envalid.str({ default: '/usr/local/bin/terminate_instance.sh' }),
     ASAP_JWT_ISS: envalid.str({ default: 'jitsi-autoscaler-sidecar' }),
     ASAP_JWT_AUD: envalid.str({ default: 'jitsi-autoscaler' }),
+    ENABLE_REPORT_STATS: envalid.bool({ default: false }),
     POLLING_URL: envalid.str(),
+    STATS_RETRIEVE_URL: envalid.str({ default: '' }),
+    STATS_REPORT_URL: envalid.str({ default: '' }),
     INSTANCE_ID: envalid.str(),
     INSTANCE_METADATA: envalid.json(),
     ASAP_SIGNING_KEY_FILE: envalid.str(),
     ASAP_JWT_KID: envalid.str(),
 });
 
+if (env.ENABLE_REPORT_STATS) {
+    if (!env.STATS_RETRIEVE_URL || !env.STATS_REPORT_URL) {
+        throw 'Stats reporting requires missing env vars: STATS_RETRIEVE_URL and STATS_REPORT_URL';
+    }
+}
+
 export default {
     HTTPServerPort: env.PORT,
     LogLevel: env.LOG_LEVEL,
     // number of seconds to wait between polling for shutdown
-    PollingInterval: env.POLLING_INTERVAL,
+    ShutdownPollingInterval: env.SHUTDOWN_POLLING_INTERVAL,
     PollingURL: env.POLLING_URL,
+    // number of seconds to wait before polling for stats
+    StatsPollingInterval: env.STATS_POLLING_INTERVAL,
+    EnableReportStats: env.ENABLE_REPORT_STATS,
+    StatsRetrieveURL: env.STATS_RETRIEVE_URL,
+    StatsReportURL: env.STATS_REPORT_URL,
     GracefulShutdownScript: env.GRACEFUL_SHUTDOWN_SCRIPT,
     TerminateScript: env.TERMINATE_SCRIPT,
     InstanceId: env.INSTANCE_ID,

@@ -5,6 +5,7 @@ import logger from './logger';
 import Poller, { InstanceDetails } from './autoscale_poller';
 import ShutdownHandler from './shutdown_handler';
 import fs from 'fs';
+import AsapRequest from './asap_request';
 
 const jwtSigningKey = fs.readFileSync(config.AsapSigningKeyFile);
 const app = express();
@@ -27,18 +28,22 @@ const shutdownHandler = new ShutdownHandler({
     terminateScript: config.TerminateScript,
 });
 
-const autoscalePoller = new Poller({
-    pollUrl: config.PollingURL,
+const asapRequest = new AsapRequest({
     signingKey: jwtSigningKey,
     asapJwtIss: config.AsapJwtIss,
     asapJwtAud: config.AsapJwtAud,
     asapJwtKid: config.AsapJwtKid,
+});
+
+const autoscalePoller = new Poller({
+    pollUrl: config.PollingURL,
     instanceDetails: instanceDetails,
     shutdownHandler: shutdownHandler,
+    asapRequest: asapRequest,
 });
 
 async function pollForShutdown() {
-    if (await autoscalePoller.pollForShutdown()) {
+    if (await autoscalePoller.checkForShutdown()) {
         setTimeout(pollForShutdown, config.PollingInterval * 1000);
     } else {
         // shutdown found, stop polling

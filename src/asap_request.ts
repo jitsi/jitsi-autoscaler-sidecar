@@ -54,4 +54,14 @@ export default class AsapRequest {
         return response;
     }
 
+    async getJson(url: string): Promise<CancelableRequest> {
+        const response = await got.get(url, {
+            headers: {
+                Authorization: `Bearer ${this.authToken()}`,
+            },
+            responseType: 'json',
+        });
+
+        return response;
+    }
 }

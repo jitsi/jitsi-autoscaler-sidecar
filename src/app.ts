@@ -6,6 +6,7 @@ import Poller, { InstanceDetails } from './autoscale_poller';
 import ShutdownHandler from './shutdown_handler';
 import fs from 'fs';
 import AsapRequest from './asap_request';
+import StatsReporter from './stats_reporter';
 
 const jwtSigningKey = fs.readFileSync(config.AsapSigningKeyFile);
 const app = express();
@@ -44,13 +45,29 @@ const autoscalePoller = new Poller({
 
 async function pollForShutdown() {
     if (await autoscalePoller.checkForShutdown()) {
-        setTimeout(pollForShutdown, config.PollingInterval * 1000);
+        setTimeout(pollForShutdown, config.ShutdownPollingInterval * 1000);
     } else {
         // shutdown found, stop polling
         logger.info('Shutdown detected, stop polling for shutdown');
     }
 }
 pollForShutdown();
+
+const statsReporter = new StatsReporter({
+    retrieveUrl: config.StatsRetrieveURL,
+    reportUrl: config.StatsReportURL,
+    instanceDetails: instanceDetails,
+    asapRequest: asapRequest,
+});
+
+async function pollForStats() {
+    await statsReporter.run();
+    setTimeout(pollForStats, config.StatsPollingInterval * 1000);
+}
+
+if (config.EnableReportStats) {
+    pollForStats();
+}
 
 app.listen(config.HTTPServerPort, () => {
     logger.info(`...listening on :${config.HTTPServerPort}`);

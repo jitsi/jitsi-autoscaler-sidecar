@@ -7,6 +7,7 @@ export interface AsapRequestOptions {
     asapJwtIss: string;
     asapJwtAud: string;
     asapJwtKid: string;
+    cacheTTL?: number;
 }
 
 export default class AsapRequest {
@@ -15,13 +16,18 @@ export default class AsapRequest {
     private asapJwtIss: string;
     private asapJwtAud: string;
     private asapJwtKid: string;
+    private cacheTTL = 60 * 45;
 
     constructor(options: AsapRequestOptions) {
         this.signingKey = options.signingKey;
-        this.asapCache = new NodeCache({ stdTTL: 60 * 45 }); // TTL of 45 minutes
         this.asapJwtIss = options.asapJwtIss;
         this.asapJwtAud = options.asapJwtAud;
         this.asapJwtKid = options.asapJwtKid;
+
+        if (options.cacheTTL !== undefined) {
+            this.cacheTTL = options.cacheTTL;
+        }
+        this.asapCache = new NodeCache({ stdTTL: this.cacheTTL }); // TTL of 45 minutes
     }
 
     authToken(): string {

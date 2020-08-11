@@ -16,10 +16,9 @@ app.get('/health', (req: express.Request, res: express.Response) => {
     res.send('healthy!');
 });
 
-const instanceDetails: InstanceDetails = { instanceId: config.InstanceId };
+const instanceDetails: InstanceDetails = { instanceId: config.InstanceId, instanceType: config.InstanceType };
 if (config.InstanceMetadata) {
     instanceDetails.group = config.InstanceMetadata.group;
-    instanceDetails.instanceId = config.InstanceId;
     instanceDetails.cloud = config.InstanceMetadata.cloud;
     instanceDetails.region = config.InstanceMetadata.region;
 }

@@ -11,6 +11,7 @@ export interface AutoscalePollerOptions {
 
 export interface InstanceDetails {
     instanceId: string;
+    instanceType: string;
     cloud?: string;
     region?: string;
     group?: string;

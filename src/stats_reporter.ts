@@ -49,7 +49,7 @@ export default class StatsReporter {
     async retrieveStats(): Promise<unknown> {
         const response = await this.asapRequest.getJson(this.retrieveUrl);
         if (response) {
-            return response.body;
+            return response;
         }
     }
 

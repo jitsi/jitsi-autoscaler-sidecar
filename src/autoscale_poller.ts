@@ -16,6 +16,10 @@ export interface InstanceDetails {
     group?: string;
 }
 
+export interface ShutdownStatus {
+    shutdown: boolean;
+}
+
 export default class AutoscalePoller {
     private instanceDetails: InstanceDetails;
     private pollUrl: string;
@@ -36,10 +40,10 @@ export default class AutoscalePoller {
         try {
             const response = await this.asapRequest.postJson(this.pollUrl, this.instanceDetails);
 
-            if (response.body) {
-                const shutdownStatus = response.body;
-                logger.debug('Received response', { shutdownStatus });
-                if (shutdownStatus.shutdown) {
+            if (response) {
+                const status: ShutdownStatus = <ShutdownStatus>response;
+                logger.debug('Received response', { status });
+                if (status.shutdown) {
                     logger.info('Received shutdown status');
                     return true;
                 }

@@ -57,7 +57,7 @@ export default class AsapRequest {
             responseType: 'json',
         });
 
-        return response;
+        return response.body;
     }
 
     async getJson(url: string): Promise<CancelableRequest> {
@@ -68,6 +68,6 @@ export default class AsapRequest {
             responseType: 'json',
         });
 
-        return response;
+        return response.body;
     }
 }

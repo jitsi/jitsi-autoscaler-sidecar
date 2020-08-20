@@ -42,22 +42,25 @@ const autoscalePoller = new Poller({
     asapRequest: asapRequest,
 });
 
-async function pollForShutdown() {
-    if (await autoscalePoller.checkForShutdown()) {
-        setTimeout(pollForShutdown, config.ShutdownPollingInterval * 1000);
-    } else {
-        // shutdown found, stop polling
-        logger.info('Shutdown detected, stop polling for shutdown');
-    }
-}
-pollForShutdown();
-
 const statsReporter = new StatsReporter({
     retrieveUrl: config.StatsRetrieveURL,
     reportUrl: config.StatsReportURL,
     instanceDetails: instanceDetails,
     asapRequest: asapRequest,
 });
+
+logger.info('Starting up sidecar with config', { config });
+
+async function pollForShutdown() {
+    if (await autoscalePoller.checkForShutdown()) {
+        setTimeout(pollForShutdown, config.ShutdownPollingInterval * 1000);
+    } else {
+        // shutdown found, stop polling
+        logger.info('Shutdown detected, stop polling for shutdown');
+        statsReporter.setShutdownStatus(true);
+    }
+}
+pollForShutdown();
 
 async function pollForStats() {
     await statsReporter.run();

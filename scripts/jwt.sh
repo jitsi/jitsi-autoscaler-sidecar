@@ -2,7 +2,11 @@
 
 [ -z "$JWT_ENV_FILE" ] && JWT_ENV_FILE="/etc/jitsi/autoscaler-sidecar/sidecar.env"
 
-[ -f "$JWT_ENV_FILE" ] && . "$JWT_ENV_FILE"
+if [ -f "$JWT_ENV_FILE" ]; then
+  . "$JWT_ENV_FILE"
+  export ASAP_SIGNING_KEY_FILE
+  export ASAP_JWT_KID
+fi
 
 SCRIPT_SRC=$(dirname "${BASH_SOURCE[0]}")
 

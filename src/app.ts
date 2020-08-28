@@ -57,7 +57,6 @@ let statsReport: StatsReport;
 let reconfigureLock = false;
 let shutdownLock = false;
 
-
 async function pollForStats() {
     try {
         statsReport = await statsReporter.retrieveStatsReport();

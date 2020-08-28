@@ -8,6 +8,8 @@ export interface AsapRequestOptions {
     asapJwtAud: string;
     asapJwtKid: string;
     cacheTTL?: number;
+    requestTimeout?: number;
+    requestRetryCount?: number;
 }
 
 export default class AsapRequest {
@@ -17,6 +19,8 @@ export default class AsapRequest {
     private asapJwtAud: string;
     private asapJwtKid: string;
     private cacheTTL = 60 * 45;
+    private requestTimeout = 3 * 1000;
+    private requestRetryCount = 2;
 
     constructor(options: AsapRequestOptions) {
         this.signingKey = options.signingKey;
@@ -24,10 +28,21 @@ export default class AsapRequest {
         this.asapJwtAud = options.asapJwtAud;
         this.asapJwtKid = options.asapJwtKid;
 
+        if (options.requestTimeout !== undefined) {
+            this.requestTimeout = options.requestTimeout;
+        }
+        if (options.requestRetryCount !== undefined) {
+            this.requestRetryCount = options.requestRetryCount;
+        }
+
         if (options.cacheTTL !== undefined) {
             this.cacheTTL = options.cacheTTL;
         }
         this.asapCache = new NodeCache({ stdTTL: this.cacheTTL }); // TTL of 45 minutes
+
+        this.authToken = this.authToken.bind(this);
+        this.postJson = this.postJson.bind(this);
+        this.getJson = this.getJson.bind(this);
     }
 
     authToken(): string {
@@ -55,6 +70,8 @@ export default class AsapRequest {
             },
             json: body,
             responseType: 'json',
+            timeout: this.requestTimeout,
+            retry: this.requestRetryCount,
         });
 
         return response.body;
@@ -66,6 +83,8 @@ export default class AsapRequest {
                 Authorization: `Bearer ${this.authToken()}`,
             },
             responseType: 'json',
+            timeout: this.requestTimeout,
+            retry: this.requestRetryCount,
         });
 
         return response.body;

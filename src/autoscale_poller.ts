@@ -44,11 +44,11 @@ export default class AutoscalePoller {
             // stats are available so use status URL
             body = statsReport;
             postURL = this.statusUrl;
-            logger.info('Stats report available, sending in request', { body });
+            logger.debug('Stats report available, sending in request', { body, postURL });
         } else {
             body = this.instanceDetails;
             postURL = this.pollUrl;
-            logger.info('Stats report not available, only sending instance info', { body });
+            logger.debug('Stats report not available, only sending instance info', { body, postURL });
         }
         let status = <SystemStatus>{ shutdown: false, reconfigure: false };
         try {

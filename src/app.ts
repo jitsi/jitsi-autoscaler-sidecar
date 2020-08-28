@@ -57,6 +57,21 @@ let statsReport: StatsReport;
 let reconfigureLock = false;
 let shutdownLock = false;
 
+
+async function pollForStats() {
+    try {
+        statsReport = await statsReporter.retrieveStatsReport();
+    } catch (err) {
+        logger.error('Error collecting stats', { err });
+        statsReport = undefined;
+    }
+    setTimeout(pollForStats, config.StatsPollingInterval * 1000);
+}
+
+if (config.EnableReportStats) {
+    pollForStats();
+}
+
 async function pollForStatus() {
     let pollResult: SystemStatus;
     // poll for shutdown/reconfigure, optionally sending stats if available
@@ -107,20 +122,6 @@ async function pollForStatus() {
     }
 }
 pollForStatus();
-
-async function pollForStats() {
-    try {
-        statsReport = await statsReporter.retrieveStatsReport();
-    } catch (err) {
-        logger.error('Error collecting stats', { err });
-        statsReport = undefined;
-    }
-    setTimeout(pollForStats, config.StatsPollingInterval * 1000);
-}
-
-if (config.EnableReportStats) {
-    pollForStats();
-}
 
 app.listen(config.HTTPServerPort, () => {
     logger.info(`...listening on :${config.HTTPServerPort}`);

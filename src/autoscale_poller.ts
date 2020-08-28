@@ -1,11 +1,11 @@
 import logger from './logger';
-import ShutdownHandler from './shutdown_handler';
 import AsapRequest from './asap_request';
+import { StatsReport } from './stats_reporter';
 
 export interface AutoscalePollerOptions {
     pollUrl: string;
+    statusUrl: string;
     instanceDetails: InstanceDetails;
-    shutdownHandler: ShutdownHandler;
     asapRequest: AsapRequest;
 }
 
@@ -17,54 +17,56 @@ export interface InstanceDetails {
     group?: string;
 }
 
-export interface ShutdownStatus {
+export interface SystemStatus {
     shutdown: boolean;
+    reconfigure: boolean;
 }
 
 export default class AutoscalePoller {
     private instanceDetails: InstanceDetails;
     private pollUrl: string;
-    private shutdownHandler: ShutdownHandler;
+    private statusUrl: string;
     private asapRequest: AsapRequest;
 
     constructor(options: AutoscalePollerOptions) {
         this.pollUrl = options.pollUrl;
+        this.statusUrl = options.statusUrl;
         this.instanceDetails = options.instanceDetails;
-        this.shutdownHandler = options.shutdownHandler;
         this.asapRequest = options.asapRequest;
 
-        this.checkForShutdown = this.checkForShutdown.bind(this);
+        this.pollWithStats = this.pollWithStats.bind(this);
     }
 
-    async requestShutdownStatus(): Promise<boolean> {
-        // TODO: actually poll
+    async pollWithStats(statsReport: StatsReport): Promise<SystemStatus> {
+        let body: unknown;
+        let postURL: string;
+        if (statsReport) {
+            // stats are available so use status URL
+            body = statsReport;
+            postURL = this.statusUrl;
+            logger.info('Stats report available, sending in request', { body });
+        } else {
+            body = this.instanceDetails;
+            postURL = this.pollUrl;
+            logger.info('Stats report not available, only sending instance info', { body });
+        }
+        let status = <SystemStatus>{ shutdown: false, reconfigure: false };
         try {
-            const response = await this.asapRequest.postJson(this.pollUrl, this.instanceDetails);
+            const response = await this.asapRequest.postJson(postURL, body);
 
             if (response) {
-                const status: ShutdownStatus = <ShutdownStatus>response;
+                status = <SystemStatus>response;
                 logger.debug('Received response', { status });
+                if (status.reconfigure) {
+                    logger.info('Received reconfigure command');
+                }
                 if (status.shutdown) {
-                    logger.info('Received shutdown status');
-                    return true;
+                    logger.info('Received shutdown command');
                 }
             }
-            return false;
         } catch (err) {
-            logger.error('Error polling for shutdown', { err });
-            return false;
+            logger.error('Error polling for status', { err });
         }
-    }
-
-    async checkForShutdown(): Promise<boolean> {
-        logger.info('Checking for shutdown', { pollUrl: this.pollUrl, details: this.instanceDetails });
-
-        // check for shutdown message
-        if (await this.requestShutdownStatus()) {
-            await this.shutdownHandler.shutdown();
-            return false;
-        }
-
-        return true;
+        return status;
     }
 }

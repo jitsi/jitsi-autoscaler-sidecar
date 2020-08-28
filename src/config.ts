@@ -7,7 +7,7 @@ const env = envalid.cleanEnv(process.env, {
     PORT: envalid.num({ default: 6000 }),
     LOG_LEVEL: envalid.str({ default: 'info' }),
     SHUTDOWN_POLLING_INTERVAL: envalid.num({ default: 60 }),
-    STATS_POLLING_INTERVAL: envalid.num({ default: 60 }),
+    STATS_POLLING_INTERVAL: envalid.num({ default: 30 }),
     GRACEFUL_SHUTDOWN_SCRIPT: envalid.str({ default: '/usr/local/bin/graceful_shutdown.sh' }),
     TERMINATE_SCRIPT: envalid.str({ default: '/usr/local/bin/terminate_instance.sh' }),
     RECONFIGURE_SCRIPT: envalid.str({ default: '/usr/local/bin/reconfigure_instance.sh' }),

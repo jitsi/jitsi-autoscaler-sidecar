@@ -67,10 +67,6 @@ async function pollForStats() {
     setTimeout(pollForStats, config.StatsPollingInterval * 1000);
 }
 
-if (config.EnableReportStats) {
-    pollForStats();
-}
-
 async function pollForStatus() {
     let pollResult: SystemStatus;
     // poll for shutdown/reconfigure, optionally sending stats if available
@@ -120,7 +116,14 @@ async function pollForStatus() {
         }
     }
 }
-pollForStatus();
+
+if (config.EnableReportStats) {
+    pollForStats().then(() => {
+        pollForStatus();
+    });
+} else {
+    pollForStatus();
+}
 
 app.listen(config.HTTPServerPort, () => {
     logger.info(`...listening on :${config.HTTPServerPort}`);

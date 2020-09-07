@@ -20,7 +20,7 @@ const env = envalid.cleanEnv(process.env, {
     STATS_REPORT_URL: envalid.str({ default: '' }),
     INSTANCE_ID: envalid.str(),
     INSTANCE_TYPE: envalid.str(),
-    INSTANCE_METADATA: envalid.json(),
+    INSTANCE_METADATA: envalid.json({ default: '{}' }),
     ASAP_SIGNING_KEY_FILE: envalid.str(),
     ASAP_JWT_KID: envalid.str(),
 });

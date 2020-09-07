@@ -41,7 +41,8 @@
     "watch-node": "nodemon dist/app.js",
     "lint": "npx eslint . --ext .ts,.tsx --fix",
     "build": "npm run lint && tsc",
-    "start": "node dist/app.js"
+    "start": "node dist/app.js",
+    "jwt": "node dist/jwt.js"
   },
   "author": "Jitsi",
   "license": "Apache-2.0"

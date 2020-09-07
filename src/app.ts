@@ -16,12 +16,12 @@ app.get('/health', (req: express.Request, res: express.Response) => {
     res.send('healthy!');
 });
 
-const instanceDetails: InstanceDetails = { instanceId: config.InstanceId, instanceType: config.InstanceType };
-if (config.InstanceMetadata) {
-    instanceDetails.group = config.InstanceMetadata.group;
-    instanceDetails.cloud = config.InstanceMetadata.cloud;
-    instanceDetails.region = config.InstanceMetadata.region;
-}
+const metadata = <unknown>config.InstanceMetadata;
+const instanceDetails = <InstanceDetails>{
+    instanceId: config.InstanceId,
+    instanceType: config.InstanceType,
+    ...(<InstanceDetails>metadata),
+};
 
 const commandHandler = new CommandHandler({
     gracefulScript: config.GracefulShutdownScript,

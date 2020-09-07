@@ -15,6 +15,8 @@ export interface InstanceDetails {
     cloud?: string;
     region?: string;
     group?: string;
+    privateIp?: string;
+    publicIp?: string;
 }
 
 export interface SystemStatus {

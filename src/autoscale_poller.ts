@@ -5,6 +5,7 @@ import { StatsReport } from './stats_reporter';
 export interface AutoscalePollerOptions {
     pollUrl: string;
     statusUrl: string;
+    statsUrl: string;
     instanceDetails: InstanceDetails;
     asapRequest: AsapRequest;
 }
@@ -28,15 +29,24 @@ export default class AutoscalePoller {
     private instanceDetails: InstanceDetails;
     private pollUrl: string;
     private statusUrl: string;
+    private statsUrl: string;
     private asapRequest: AsapRequest;
 
     constructor(options: AutoscalePollerOptions) {
         this.pollUrl = options.pollUrl;
         this.statusUrl = options.statusUrl;
+        this.statsUrl = options.statsUrl;
         this.instanceDetails = options.instanceDetails;
         this.asapRequest = options.asapRequest;
 
         this.pollWithStats = this.pollWithStats.bind(this);
+    }
+    async reportStats(statsReport: StatsReport): Promise<void> {
+        try {
+            await this.asapRequest.postJson(this.statsUrl, statsReport);
+        } catch (err) {
+            logger.error('Error sending stats report', { err, traceback: err.traceback });
+        }
     }
 
     async pollWithStats(statsReport: StatsReport): Promise<SystemStatus> {

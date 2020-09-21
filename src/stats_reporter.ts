@@ -80,6 +80,11 @@ export default class StatsReporter {
             this.setStatsError(true);
             stats = {};
         }
+        const report = this.buildStatsReport(stats);
+        return report;
+    }
+
+    buildStatsReport(stats: unknown): StatsReport {
         const ts = new Date();
         const report = <StatsReport>{
             instance: this.instanceDetails,
@@ -91,6 +96,7 @@ export default class StatsReporter {
             statsError: this.statsError,
         };
         logger.debug('Stats report', { report });
+
         return report;
     }
 }

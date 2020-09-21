@@ -74,7 +74,7 @@ async function jibriStateWebhook(req: Request, res: Response) {
     }
 
     // update global stats report with
-    statsReport = statsReporter.buildStatsReport(instate.status);
+    statsReport = statsReporter.buildStatsReport(instate);
     await autoscalePoller.reportStats(statsReport);
     res.status(200);
     res.send('{"status":"OK"}');

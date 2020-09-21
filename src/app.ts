@@ -1,6 +1,6 @@
 import bodyParser from 'body-parser';
 import config from './config';
-import express from 'express';
+import express, { Request, Response } from 'express';
 import logger from './logger';
 import Poller, { InstanceDetails, SystemStatus } from './autoscale_poller';
 import CommandHandler from './command_handler';
@@ -9,12 +9,6 @@ import AsapRequest from './asap_request';
 import StatsReporter, { StatsReport } from './stats_reporter';
 
 const jwtSigningKey = fs.readFileSync(config.AsapSigningKeyFile);
-const app = express();
-app.use(bodyParser.json());
-
-app.get('/health', (req: express.Request, res: express.Response) => {
-    res.send('healthy!');
-});
 
 const metadata = <unknown>config.InstanceMetadata;
 const instanceDetails = <InstanceDetails>{
@@ -39,6 +33,7 @@ const asapRequest = new AsapRequest({
 const autoscalePoller = new Poller({
     pollUrl: config.PollingURL,
     statusUrl: config.StatusURL,
+    statsUrl: config.StatsReportURL,
     instanceDetails: instanceDetails,
     asapRequest: asapRequest,
 });
@@ -56,6 +51,34 @@ let statsReport: StatsReport;
 
 let reconfigureLock = false;
 let shutdownLock = false;
+
+interface JibriMetadata {
+    [key: string]: string;
+}
+interface JibriState {
+    jibriId: string;
+    status: unknown;
+    timestamp?: number;
+    metadata: JibriMetadata;
+}
+
+async function jibriStateWebhook(req: Request, res: Response) {
+    const instate: JibriState = req.body;
+    if (!instate.status) {
+        res.sendStatus(400);
+        return;
+    }
+    if (!instate.jibriId) {
+        res.sendStatus(400);
+        return;
+    }
+
+    // update global stats report with
+    statsReport = statsReporter.buildStatsReport(instate.status);
+    await autoscalePoller.reportStats(statsReport);
+    res.status(200);
+    res.send('{"status":"OK"}');
+}
 
 async function pollForStats() {
     try {
@@ -124,6 +147,21 @@ if (config.EnableReportStats) {
 } else {
     pollForStatus();
 }
+
+const app = express();
+app.use(bodyParser.json());
+
+app.get('/health', (req: express.Request, res: express.Response) => {
+    res.send('healthy!');
+});
+
+app.post('/hook/v1/status', async (req, res, next) => {
+    try {
+        await jibriStateWebhook(req, res);
+    } catch (err) {
+        next(err);
+    }
+});
 
 app.listen(config.HTTPServerPort, () => {
     logger.info(`...listening on :${config.HTTPServerPort}`);

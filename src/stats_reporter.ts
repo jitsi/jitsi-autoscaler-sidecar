@@ -63,7 +63,7 @@ export default class StatsReporter {
 
     setReconfigureEnd(status: boolean): void {
         this.reconfigureError = status;
-        this.reconfigureComplete = this.reconfigureStarted.toUTCString();
+        this.reconfigureComplete = this.reconfigureStarted.toISOString();
         this.reconfigureStarted = undefined;
     }
 

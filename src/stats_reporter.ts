@@ -28,7 +28,7 @@ export default class StatsReporter {
     private shutdownError: boolean;
     private reconfigureError: boolean;
     private reconfigureComplete: string;
-    private reconfigureStarted: Date;
+    private reconfigureStarted: string;
     private statsError: boolean;
 
     constructor(options: StatsReporterOptions) {
@@ -55,15 +55,15 @@ export default class StatsReporter {
         this.shutdownError = status;
     }
 
-    setReconfigureStart(): void {
+    setReconfigureStart(reconfigureStarted: string): void {
         // initialize the reconfiguration error handler and start time
-        this.reconfigureStarted = new Date();
+        this.reconfigureStarted = reconfigureStarted;
         this.reconfigureError = false;
     }
 
     setReconfigureEnd(status: boolean): void {
         this.reconfigureError = status;
-        this.reconfigureComplete = this.reconfigureStarted.toISOString();
+        this.reconfigureComplete = this.reconfigureStarted;
         this.reconfigureStarted = undefined;
     }
 

@@ -127,7 +127,7 @@ async function pollForStatus() {
                 // set reconfigure lock, only reconfigure if configure is not already running
                 reconfigureLock = true;
                 try {
-                    statsReporter.setReconfigureStart();
+                    statsReporter.setReconfigureStart(pollResult.reconfigure);
                     await commandHandler.reconfigure();
                     statsReporter.setReconfigureEnd(false);
                     logger.info('Reconfiguration completed');

@@ -57,8 +57,8 @@ export default class StatsReporter {
         this.shutdownStatus = status;
     }
 
-    setShutdownError(status: boolean): void {
-        this.shutdownError = status;
+    setShutdownError(shutdownError: boolean): void {
+        this.shutdownError = shutdownError;
     }
 
     setReconfigureStart(reconfigureStarted: string): void {
@@ -68,7 +68,7 @@ export default class StatsReporter {
     }
 
     setReconfigureEnd(reconfigureError: boolean): void {
-        this.reconfigureError = status;
+        this.reconfigureError = reconfigureError;
         this.reconfigureComplete = this.reconfigureStarted;
         this.reconfigureStarted = undefined;
     }

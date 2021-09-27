@@ -22,7 +22,7 @@ export interface InstanceDetails {
 
 export interface SystemStatus {
     shutdown: boolean;
-    reconfigure: boolean;
+    reconfigure: string;
 }
 
 export default class AutoscalePoller {
@@ -62,7 +62,7 @@ export default class AutoscalePoller {
             postURL = this.pollUrl;
             logger.debug('Stats report not available, only sending instance info', { body, postURL });
         }
-        let status = <SystemStatus>{ shutdown: false, reconfigure: false };
+        let status = <SystemStatus>{ shutdown: false, reconfigure: '' };
         try {
             const response = await this.asapRequest.postJson(postURL, body);
 

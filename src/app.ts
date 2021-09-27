@@ -123,18 +123,22 @@ async function pollForStatus() {
     } else {
         if (pollResult.reconfigure) {
             if (!reconfigureLock) {
+                logger.info('Reconfigure detected, triggering reconfiguration');
                 // set reconfigure lock, only reconfigure if configure is not already running
                 reconfigureLock = true;
                 try {
+                    statsReporter.setReconfigureStart(pollResult.reconfigure);
                     await commandHandler.reconfigure();
-                    statsReporter.setReconfigureError(false);
+                    statsReporter.setReconfigureEnd(false);
+                    logger.info('Reconfiguration completed');
                 } catch (err) {
-                    statsReporter.setReconfigureError(true);
+                    statsReporter.setReconfigureEnd(true);
+                    logger.error('Reconfiguration failed', { err });
                 }
                 // reconfigure is done
                 reconfigureLock = false;
             } else {
-                logger.info('Reconfigure already detected, skipping reconfigure trigger');
+                logger.info('Reconfigure already running, skipping reconfigure trigger');
             }
         }
     }

@@ -17,6 +17,7 @@ export interface StatsReport {
     reconfigureError: boolean;
     statsError: boolean;
     timestamp: number;
+    reconfigureComplete: string;
 }
 
 export default class StatsReporter {
@@ -26,6 +27,14 @@ export default class StatsReporter {
     private shutdownStatus: boolean;
     private shutdownError: boolean;
     private reconfigureError: boolean;
+    /**
+       A string identifying the completed reconfigure request; the reconfigure request identifier was initially received via the reconfigureStarted parameter.
+    */
+    private reconfigureComplete: string;
+    /**
+    A string identifying the reconfigure request, representing the timestamp when the autoscaler received the reconfigure request
+    */
+    private reconfigureStarted: string;
     private statsError: boolean;
 
     constructor(options: StatsReporterOptions) {
@@ -36,6 +45,7 @@ export default class StatsReporter {
         this.shutdownStatus = false;
         this.shutdownError = false;
         this.reconfigureError = false;
+        this.reconfigureComplete = '';
         this.statsError = false;
 
         this.retrieveStats = this.retrieveStats.bind(this);
@@ -47,12 +57,20 @@ export default class StatsReporter {
         this.shutdownStatus = status;
     }
 
-    setShutdownError(status: boolean): void {
-        this.shutdownError = status;
+    setShutdownError(shutdownError: boolean): void {
+        this.shutdownError = shutdownError;
     }
 
-    setReconfigureError(status: boolean): void {
-        this.reconfigureError = status;
+    setReconfigureStart(reconfigureStarted: string): void {
+        // initialize the reconfiguration error handler and start time
+        this.reconfigureStarted = reconfigureStarted;
+        this.reconfigureError = false;
+    }
+
+    setReconfigureEnd(reconfigureError: boolean): void {
+        this.reconfigureError = reconfigureError;
+        this.reconfigureComplete = this.reconfigureStarted;
+        this.reconfigureStarted = undefined;
     }
 
     setStatsError(status: boolean): void {
@@ -93,6 +111,7 @@ export default class StatsReporter {
             shutdownStatus: this.shutdownStatus,
             shutdownError: this.shutdownError,
             reconfigureError: this.reconfigureError,
+            reconfigureComplete: this.reconfigureComplete,
             statsError: this.statsError,
         };
         logger.debug('Stats report', { report });

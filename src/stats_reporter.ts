@@ -28,6 +28,9 @@ export default class StatsReporter {
     private shutdownError: boolean;
     private reconfigureError: boolean;
     private reconfigureComplete: string;
+    /**
+    A string identifying the reconfigure request, representing the timestamp when the autoscaler received the reconfigure request
+    */
     private reconfigureStarted: string;
     private statsError: boolean;
 

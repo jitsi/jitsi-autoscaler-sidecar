@@ -64,7 +64,7 @@ export default class StatsReporter {
         this.reconfigureError = false;
     }
 
-    setReconfigureEnd(status: boolean): void {
+    setReconfigureEnd(reconfigureError: boolean): void {
         this.reconfigureError = status;
         this.reconfigureComplete = this.reconfigureStarted;
         this.reconfigureStarted = undefined;

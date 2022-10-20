@@ -77,7 +77,7 @@ export default class AutoscalePoller {
                 }
             }
         } catch (err) {
-            logger.error('Error polling for status', { err });
+            logger.error('Error polling the autoscaler for system status', { err, postURL });
         }
         return status;
     }

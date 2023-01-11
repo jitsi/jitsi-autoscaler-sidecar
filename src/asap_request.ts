@@ -1,5 +1,5 @@
 import NodeCache from 'node-cache';
-import { sign } from 'jsonwebtoken';
+import { sign, Secret } from 'jsonwebtoken';
 import got, { CancelableRequest } from 'got';
 
 export interface AsapRequestOptions {
@@ -13,7 +13,7 @@ export interface AsapRequestOptions {
 }
 
 export default class AsapRequest {
-    private signingKey: Buffer;
+    private signingKey: Secret;
     private asapCache: NodeCache;
     private asapJwtIss: string;
     private asapJwtAud: string;
@@ -23,7 +23,7 @@ export default class AsapRequest {
     private requestRetryCount = 2;
 
     constructor(options: AsapRequestOptions) {
-        this.signingKey = options.signingKey;
+        this.signingKey = <Secret>options.signingKey;
         this.asapJwtIss = options.asapJwtIss;
         this.asapJwtAud = options.asapJwtAud;
         this.asapJwtKid = options.asapJwtKid;

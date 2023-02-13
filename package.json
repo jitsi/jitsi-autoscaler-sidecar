@@ -33,7 +33,10 @@
     "eslint-plugin-prettier": "^3.1.4",
     "nodemon": "^2.0.4",
     "prettier": "^2.0.5",
-    "typescript": "^3.9.7"
+    "typescript": "^3.9.7",
+    "webpack": "^5.72.0",
+    "webpack-cli": "^4.9.2",
+    "webpack-node-externals": "^3.0.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -41,7 +44,7 @@
     "watch-ts": "tsc -w",
     "watch-node": "nodemon dist/app.js",
     "lint": "npx eslint . --ext .ts,.tsx --fix",
-    "build": "npm run lint && tsc",
+    "build": "npm run lint && tsc && webpack",
     "start": "node dist/app.js",
     "jwt": "node dist/jwt.js"
   },

@@ -1,0 +1,5 @@
+Template: jitsi-autoscaler-sidecar/autoscaler-address
+Type: string
+Default: localhost
+Description: Autoscaler address/dns:
+ The IP address or DNS of the autoscaler is needed in order to allow sidecar to communicate with it via REST.

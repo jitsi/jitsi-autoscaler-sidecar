@@ -105,3 +105,6 @@ dist
 
 # VSCode files
 .vscode/
+
+# Webpack output
+bundle/

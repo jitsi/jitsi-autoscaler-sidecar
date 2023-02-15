@@ -1,0 +1,16 @@
+[Unit]
+Description=jitsi autoscaler sidecar System Service
+
+[Service]
+WorkingDirectory=/usr/share/jitsi-autoscaler-sidecar
+EnvironmentFile=/etc/jitsi/autoscaler-sidecar/env
+ExecStart=/usr/bin/node app.js
+StandardOutput=append:/var/log/jitsi/autoscaler-sidecar.log
+StandardError=append:/var/log/jitsi/autoscaler-sidecar.log
+Type=simple
+User=jitsi-autoscaler-sidecar
+Group=jitsi
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

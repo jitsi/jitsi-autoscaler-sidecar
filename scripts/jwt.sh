@@ -10,4 +10,4 @@ fi
 
 SCRIPT_SRC=$(dirname "${BASH_SOURCE[0]}")
 
-node $SCRIPT_SRC/../dist/jwt.js
+node $SCRIPT_SRC/jwt.js

@@ -13,9 +13,10 @@ const env = envalid.cleanEnv(process.env, {
     RECONFIGURE_SCRIPT: envalid.str({ default: '/usr/local/bin/reconfigure_instance.sh' }),
     ASAP_JWT_ISS: envalid.str({ default: 'jitsi-autoscaler-sidecar' }),
     ASAP_JWT_AUD: envalid.str({ default: 'jitsi-autoscaler' }),
+    AUTOSCALER_HOST_URL: envalid.str({ default: '' }),
     ENABLE_REPORT_STATS: envalid.bool({ default: false }),
-    POLLING_URL: envalid.str(),
-    STATUS_URL: envalid.str(),
+    POLLING_URL: envalid.str({ default: '' }),
+    STATUS_URL: envalid.str({ default: '' }),
     STATS_RETRIEVE_URL: envalid.str({ default: '' }),
     STATS_REPORT_URL: envalid.str({ default: '' }),
     INSTANCE_ID: envalid.str(),
@@ -25,9 +26,17 @@ const env = envalid.cleanEnv(process.env, {
     ASAP_JWT_KID: envalid.str(),
 });
 
+if (!env.POLLING_URL && !env.AUTOSCALER_HOST_URL) {
+    throw 'Required env vars missing: POLLING_URL or AUTOSCALER_HOST_URL';
+}
+
+if (!env.STATUS_URL && !env.AUTOSCALER_HOST_URL) {
+    throw 'Required env vars missing: STATUS_URL or AUTOSCALER_HOST_URL';
+}
+
 if (env.ENABLE_REPORT_STATS) {
-    if (!env.STATS_RETRIEVE_URL || !env.STATS_REPORT_URL) {
-        throw 'Stats reporting requires missing env vars: STATS_RETRIEVE_URL and STATS_REPORT_URL';
+    if (!env.STATS_RETRIEVE_URL || (!env.STATS_REPORT_URL && !env.AUTOSCALER_HOST_URL)) {
+        throw 'Stats reporting requires missing env vars: STATS_RETRIEVE_URL and STATS_REPORT_URL or AUTOSCALER_HOST_URL';
     }
 }
 
@@ -36,13 +45,13 @@ export default {
     LogLevel: env.LOG_LEVEL,
     // number of seconds to wait between polling for shutdown
     ShutdownPollingInterval: env.SHUTDOWN_POLLING_INTERVAL,
-    PollingURL: env.POLLING_URL,
-    StatusURL: env.STATUS_URL,
+    PollingURL: env.POLLING_URL ? env.POLLING_URL : env.AUTOSCALER_HOST_URL + '/sidecar/poll',
+    StatusURL: env.STATUS_URL ? env.STATUS_URL : env.AUTOSCALER_HOST_URL + '/sidecar/status',
     // number of seconds to wait before polling for stats
     StatsPollingInterval: env.STATS_POLLING_INTERVAL,
     EnableReportStats: env.ENABLE_REPORT_STATS,
     StatsRetrieveURL: env.STATS_RETRIEVE_URL,
-    StatsReportURL: env.STATS_REPORT_URL,
+    StatsReportURL: env.STATS_REPORT_URL ? env.STATS_REPORT_URL : env.AUTOSCALER_HOST_URL + '/sidecar/stats',
     GracefulShutdownScript: env.GRACEFUL_SHUTDOWN_SCRIPT,
     TerminateScript: env.TERMINATE_SCRIPT,
     ReconfigureScript: env.RECONFIGURE_SCRIPT,

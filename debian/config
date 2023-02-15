@@ -1,0 +1,8 @@
+#!/bin/sh -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+# selectonr address
+db_input critical jitsi-autoscaler-sidecar/autoscaler-address || true
+db_go

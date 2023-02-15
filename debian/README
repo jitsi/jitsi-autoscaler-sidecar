@@ -1,0 +1,7 @@
+The Debian Package jitsi-autoscaler-sidecar
+----------------------------
+
+Component sidecar to run next to components such as jibri, jigasi and JVB
+to control autoscaling behavior.
+
+ -- Damyan Minkov <damencho@jitsi.org>  Tue, 26 Apr 2022 14:22:01 +0000

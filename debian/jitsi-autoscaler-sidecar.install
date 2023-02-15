@@ -1,0 +1,4 @@
+dist/*.js usr/share/jitsi-autoscaler-sidecar/
+node_modules usr/share/jitsi-autoscaler-sidecar/
+scripts/jwt.sh usr/share/jitsi-autoscaler-sidecar/
+env.example   usr/share/jitsi-autoscaler-sidecar/

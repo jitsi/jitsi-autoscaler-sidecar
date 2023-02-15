@@ -1,0 +1,14 @@
+Source: jitsi-autoscaler-sidecar
+Section: net
+Priority: extra
+Maintainer: Jitsi Team <dev@jitsi.org>
+Build-Depends: debhelper (>= 11), nodejs
+Standards-Version: 4.4.1
+Homepage: https://jitsi.org/meet
+
+Package: jitsi-autoscaler-sidecar
+Architecture: all
+Depends: ${misc:Depends}, openssl, nodejs
+Description: The side car installed next to JVB, jibri and jigasi. Used to gather
+  health and stats and to send commands to shutdown or reconfigure instances.
+  Communicates with jitsi-autoscaler via asap jwt tokens.

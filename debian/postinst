@@ -1,0 +1,142 @@
+#!/bin/sh
+# postinst script for jitsi-autoscaler-sidecar
+#
+# see: dh_installdeb(1)
+
+set -e
+
+# summary of how this script can be called:
+#        * <postinst> `configure' <most-recently-configured-version>
+#        * <old-postinst> `abort-upgrade' <new version>
+#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>
+#          <new-version>
+#        * <postinst> `abort-remove'
+#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
+#          <failed-install-package> <version> `removing'
+#          <conflicting-package> <version>
+# for details, see https://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+
+# loading debconf
+. /usr/share/debconf/confmodule
+
+case "$1" in
+    configure)
+        OWNER=jitsi-autoscaler-sidecar
+        GROUP=jitsi
+        HOME_FOLDER=/usr/share/jitsi-autoscaler-sidecar
+        CONFIG=/etc/jitsi/autoscaler-sidecar/env
+        SIGNING_KEY_FILE=/etc/jitsi/autoscaler-sidecar/asap.key
+        ASAP_PUBLIC=/etc/jitsi/autoscaler-sidecar/asap.pem
+
+        # we don't want to start the daemon as root
+        if ! getent group $GROUP > /dev/null ; then
+            groupadd $GROUP
+        fi
+        if ! getent passwd $OWNER > /dev/null ; then
+            useradd -r -g $GROUP --shell /bin/bash --create-home -d $HOME_FOLDER $OWNER
+        fi
+        if ! groups $OWNER | grep '\bjitsi\b' > /dev/null ; then
+            usermod -g $GROUP $OWNER
+        fi
+
+        mkdir -p $HOME_FOLDER
+
+        # we claim the home folder in case it is owned by someone else
+        CURROWNER=$(stat -c '%U' $HOME_FOLDER)
+        CURRGROUP=$(stat -c '%G' $HOME_FOLDER)
+        if ! dpkg-statoverride --list $HOME_FOLDER/* >/dev/null && [ "$CURROWNER:$CURRGROUP" != "$OWNER:$GROUP" ]; then
+            chown -R $OWNER:$GROUP $HOME_FOLDER
+        fi
+
+        CONFIG_DIR=$(dirname $CONFIG)
+        mkdir -p $CONFIG_DIR
+        if ! dpkg-statoverride --list "$CONFIG_DIR" >/dev/null; then
+            chown -R $OWNER:$GROUP "$CONFIG_DIR"
+            chmod 750 "$CONFIG_DIR"
+        fi
+
+        if [ ! -d /var/log/jitsi ]; then
+            mkdir -p /var/log/jitsi
+        fi
+        chown $OWNER:$GROUP /var/log/jitsi
+        chmod 770 /var/log/jitsi
+
+        # manage config for new installs
+        if [ ! -f $CONFIG ] ; then
+            cp /usr/share/jitsi-autoscaler-sidecar/env.example $CONFIG
+
+            # autoscaler host address
+            # use debconf first before printing in terminal as this confuses debconf
+            db_get jitsi-autoscaler-sidecar/autoscaler-address
+            if [ -z "$RET" ] ; then
+                db_set jitsi-autoscaler-sidecar/autoscaler-address "localhost"
+                db_input critical jitsi-autoscaler-sidecar/autoscaler-address || true
+                db_go
+                db_get jitsi-autoscaler-sidecar/autoscaler-address
+            fi
+
+            AUTOSCALER_ADDRESS=$(echo "$RET" | xargs echo -n)
+            # this will work on new installs or reconfigure, when address had changed
+            if ! grep -q "^AUTOSCALER_HOST_URL=" "$CONFIG"; then
+                sed -i "s/#AUTOSCALER_HOST_URL=.*/AUTOSCALER_HOST_URL=https:\\/\\/${AUTOSCALER_ADDRESS}/" $CONFIG
+            fi
+            # and we're done with debconf
+            db_stop
+
+            # instance type
+            JIGASI_INSTALL_CHECK="$(dpkg-query -f '${Status}' -W 'jigasi' 2>/dev/null | awk '{print $3}' || true)"
+            JIBRI_INSTALL_CHECK="$(dpkg-query -f '${Status}' -W 'jibri' 2>/dev/null | awk '{print $3}' || true)"
+            INSTANCE_TYPE="JVB"
+            if [ "$JIGASI_INSTALL_CHECK" = "installed" ] \
+               || [ "$JIGASI_INSTALL_CHECK" = "unpacked" ] ; then
+                INSTANCE_TYPE="jigasi"
+            elif [ "$JIBRI_INSTALL_CHECK" = "installed" ] \
+               || [ "$JIBRI_INSTALL_CHECK" = "unpacked" ] ; then
+                INSTANCE_TYPE="jibri"
+            else
+                echo "----------------"
+                echo ""
+                echo "We default to JVB instance type for the sidecar, adjust if using jibri, SIP Jibri (sip-jibri), or jigasi"
+                echo ""
+                echo "----------------"
+            fi
+            sed -i "s/INSTANCE_TYPE=/INSTANCE_TYPE='${INSTANCE_TYPE}'/g" $CONFIG
+
+            # key file
+            if [ ! -f $SIGNING_KEY_FILE ] ; then
+                # let's generate one
+                openssl genrsa -out $SIGNING_KEY_FILE 4096
+                openssl rsa -in $SIGNING_KEY_FILE -pubout -out $ASAP_PUBLIC
+                echo "----------------"
+                echo ""
+                echo "We generated a private/public pair to be used by the sidecar."
+                echo "Please copy ${ASAP_PUBLIC} to your signal node under /etc/jitsi/keys/public/server/."
+                echo "Or the appropriate place for your deployment, used by the selector(SYSTEM_ASAP_BASE_URL_MAPPINGS)"
+                echo ""
+                echo "----------------"
+            fi
+            sed -i "s#ASAP_SIGNING_KEY_FILE=#ASAP_SIGNING_KEY_FILE=${SIGNING_KEY_FILE}#g" $CONFIG
+
+            # Let's update owner of newly created files
+            chown -R $OWNER:$GROUP $CONFIG_DIR/*
+
+        fi
+
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+# dh_installdeb will replace this with shell code automatically
+# generated by other debhelper scripts.
+
+#DEBHELPER#
+
+exit 0

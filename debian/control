@@ -1,0 +1,16 @@
+Source: jitsi-autoscaler-sidecar
+Maintainer: Jitsi Team <dev@jitsi.org>
+Uploaders: Emil Ivov <emcho@jitsi.org>, Damian Minkov <damencho@jitsi.org>
+Section: net
+Priority: optional
+Build-Depends: npm, dh-systemd, debhelper (>= 10)
+Standards-Version: 4.0.0
+Homepage: https://jitsi.org/meet
+Vcs-Browser: https://github.com/jitsi/jitsi-autoscaler-sidecar
+Vcs-Git: https://github.com/jitsi/jitsi-autoscaler-sidecar.git
+
+Package: jitsi-autoscaler-sidecar
+Architecture: all
+Essential: no
+Depends: nodejs
+Description: Sidecar service for jitsi-autoscaler

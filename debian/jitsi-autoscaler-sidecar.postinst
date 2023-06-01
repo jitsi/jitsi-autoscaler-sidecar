@@ -1,0 +1,164 @@
+#!/bin/bash
+# postinst script for jitsi-meet
+#
+# see: dh_installdeb(1)
+
+set -e
+
+# summary of how this script can be called:
+#        * <postinst> `configure' <most-recently-configured-version>
+#        * <old-postinst> `abort-upgrade' <new version>
+#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>
+#          <new-version>
+#        * <postinst> `abort-remove'
+#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
+#          <failed-install-package> <version> `removing'
+#          <conflicting-package> <version>
+# for details, see http://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+
+case "$1" in
+    configure)
+        # we don't want to start the daemon as root
+        if ! getent group jitsi > /dev/null ; then
+            groupadd jitsi
+        fi
+        if ! getent passwd autoscaler-sidecar > /dev/null ; then
+            useradd -r -g jitsi --shell /bin/bash --create-home -d /usr/share/jitsi-autoscaler-sidecar autoscaler-sidecar
+        fi
+        if ! groups autoscaler-sidecar | grep '\bjitsi\b' > /dev/null ; then
+            usermod -g jitsi autoscaler-sidecar
+        fi
+
+        # we create home folder only if it doesn't exist
+        if [ ! -d /usr/share/jitsi-autoscaler-sidecar ]; then
+            mkdir -p /usr/share/jitsi-autoscaler-sidecar
+        fi
+
+        # we claim the home folder of jitsi-autoscaler-sidecar in case it is owned by someone else
+        OWNER=$(stat -c '%U' /usr/share/jitsi-autoscaler-sidecar)
+        GROUP=$(stat -c '%G' /usr/share/jitsi-autoscaler-sidecar)
+        if ! dpkg-statoverride --list /usr/share/jitsi-autoscaler-sidecar/* >/dev/null && [ "$OWNER:$GROUP" != "autoscaler-sidecar:jitsi" ]; then
+            chown -R autoscaler-sidecar:jitsi /usr/share/jitsi-autoscaler-sidecar
+            OWNER=autoscaler-sidecar
+            GROUP=jitsi
+        fi
+
+        CONFIG_DIR="/etc/jitsi/autoscaler-sidecar"
+
+        if ! [ -f $CONFIG_DIR ]; then
+            mkdir -p $CONFIG_DIR
+        fi
+
+        if ! dpkg-statoverride --list "$CONFIG_DIR" >/dev/null; then
+            chown autoscaler-sidecar:$GROUP "$CONFIG_DIR"
+            chmod 755 "$CONFIG_DIR"
+        fi
+
+        # loading debconf
+        . /usr/share/debconf/confmodule
+
+        # try to get host from jitsi-videobridge
+        db_get jitsi-videobridge/jvb-hostname
+        if [ -z "$RET" ] ; then
+            RET="jitsi-meet.example.com"
+            echo "Warning! Fallback to default jitsi-meet FQN:${RET}"
+        fi
+        JVB_HOSTNAME=$(echo "$RET" | xargs echo -n)
+
+        db_get jitsi-autoscaler-sidecar/kid || true
+        CUSTOM_KID=$RET
+
+        db_get jitsi-autoscaler-sidecar/instance-id || true
+        CUSTOM_INSTANCE_ID=$RET
+
+        db_get jitsi-autoscaler-sidecar/instance-type || true
+        CUSTOM_INSTANCE_TYPE=$RET
+
+        db_get jitsi-autoscaler-sidecar/polling-url || true
+        CUSTOM_POLLING_URL=$RET
+
+        db_get jitsi-autoscaler-sidecar/status-url || true
+        CUSTOM_STATUS_URL=$RET
+
+        CURRENT_DATE=$(date '+%Y-%m-%d')
+        ASAP_JWT_KID="jitsi/jwt-${CURRENT_DATE}"
+        INSTANCE_ID="${hostname -s}"
+        INSTANCE_TYPE="JVB"
+        POLLING_URL="http://localhost:3000/sidecar/poll"
+        STATUS_URL="http://localhost:3000/sidecar/status"
+
+        if [ ! -z "${CUSTOM_KID}" ]; then
+            ASAP_JWT_KID="${CUSTOM_KID}"
+            # Let's reset the values so we don't get them on next update
+            db_reset autoscaler-sidecar/kid
+        fi
+        if [ ! -z "${CUSTOM_INSTANCE_ID}" ]; then
+            INSTANCE_ID="${CUSTOM_INSTANCE_ID}"
+            db_reset autoscaler-sidecar/instance-id
+        fi
+        if [ ! -z "${CUSTOM_INSTANCE_TYPE}" ]; then
+            INSTANCE_TYPE="${CUSTOM_INSTANCE_TYPE}"
+            db_reset autoscaler-sidecar/instance-type
+        fi
+        if [ ! -z "${CUSTOM_POLLING_URL}" ]; then
+            POLLING_URL="${CUSTOM_POLLING_URL}"
+            db_reset autoscaler-sidecar/pooling-url
+        fi
+        if [ ! -z "${CUSTOM_STATUS_URL}" ]; then
+            STATUS_URL="${CUSTOM_STATUS_URL}"
+            db_reset autoscaler-sidecar/status-url
+        fi
+
+        # and we're done with debconf
+        db_stop
+
+        SYSTEM_ASAP_KID="jitsi/jwt-${CURRENT_DATE}"
+
+        ASAP_SIGNING_KEY_FILE="${CONFIG_DIR}/asap.key"
+        ASAP_PUBLIC="${CONFIG_DIR}/asap.pem"
+        # let's generate asap key pair if it is not available
+        if [ ! -f $ASAP_SIGNING_KEY_FILE ] ; then
+            CURRENT_KEY_FILE="${CONFIG_DIR}/asap-${CURRENT_DATE}.key"
+            CURRENT_PUBLIC="${CONFIG_DIR}/asap-${CURRENT_DATE}.pem"
+            openssl genrsa -out $CURRENT_KEY_FILE 4096
+            openssl rsa -in $CURRENT_KEY_FILE -pubout -outform PEM -out $CURRENT_PUBLIC
+            echo "----------------"
+            echo ""
+            echo "We generated a private/public pair to be used by the sidecar."
+            echo ""
+            echo "----------------"
+
+            ln -s ${CURRENT_KEY_FILE} ${ASAP_SIGNING_KEY_FILE}
+            ln -s ${CURRENT_PUBLIC} ${ASAP_PUBLIC}
+            chown autoscaler-sidecar:$GROUP "$CONFIG_DIR"/*
+        fi
+
+        SIDECAR_CONFIG="${CONFIG_DIR}/config"
+        if [ ! -f $SIDECAR_CONFIG ] ; then
+            cp /usr/share/jitsi-autoscaler-sidecar/env.example $SIDECAR_CONFIG
+            sed -i s#ASAP_JWT_KID=#ASAP_JWT_KID=\"${ASAP_JWT_KID}\"#g $SIDECAR_CONFIG
+            sed -i s#ASAP_SIGNING_KEY_FILE=#ASAP_SIGNING_KEY_FILE=${CLIENT_SIGNING_KEY_FILE}#g $SIDECAR_CONFIG
+            sed -i s#INSTANCE_ID=#INSTANCE_ID=${INSTANCE_ID}#g $SIDECAR_CONFIG
+            sed -i s#INSTANCE_TYPE=#INSTANCE_TYPE=${INSTANCE_TYPE}#g $SIDECAR_CONFIG
+            sed -i s#POLLING_URL=#POLLING_URL=${POLLING_URL}#g $SIDECAR_CONFIG
+            sed -i s#STATUS_URL=#STATUS_URL=${STATUS_URL}#g $SIDECAR_CONFIG
+        fi
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+# dh_installdeb will replace this with shell code automatically
+# generated by other debhelper scripts.
+
+#DEBHELPER#
+
+exit 0
+

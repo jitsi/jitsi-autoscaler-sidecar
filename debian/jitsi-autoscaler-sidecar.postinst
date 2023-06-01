@@ -83,7 +83,7 @@ case "$1" in
 
         CURRENT_DATE=$(date '+%Y-%m-%d')
         ASAP_JWT_KID="jitsi/jwt-${CURRENT_DATE}"
-        INSTANCE_ID="${hostname -s}"
+        INSTANCE_ID="$(hostname -s)"
         INSTANCE_TYPE="JVB"
         POLLING_URL="http://localhost:3000/sidecar/poll"
         STATUS_URL="http://localhost:3000/sidecar/status"

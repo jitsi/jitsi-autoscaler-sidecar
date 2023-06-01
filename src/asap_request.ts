@@ -1,6 +1,6 @@
-import NodeCache from 'node-cache';
-import { sign } from 'jsonwebtoken';
 import got, { CancelableRequest } from 'got';
+import { sign } from 'jsonwebtoken';
+import NodeCache from 'node-cache';
 
 export interface AsapRequestOptions {
     signingKey: Buffer;
@@ -12,6 +12,9 @@ export interface AsapRequestOptions {
     requestRetryCount?: number;
 }
 
+/**
+ * The asap request.
+ */
 export default class AsapRequest {
     private signingKey: Buffer;
     private asapCache: NodeCache;
@@ -22,6 +25,10 @@ export default class AsapRequest {
     private requestTimeout = 3 * 1000;
     private requestRetryCount = 2;
 
+    /**
+     * Constructs request.
+     * @param options
+     */
     constructor(options: AsapRequestOptions) {
         this.signingKey = options.signingKey;
         this.asapJwtIss = options.asapJwtIss;
@@ -45,8 +52,12 @@ export default class AsapRequest {
         this.getJson = this.getJson.bind(this);
     }
 
+    /**
+     * Returns an auth token.
+     */
     authToken(): string {
         const cachedAuth: string = this.asapCache.get('asap');
+
         if (cachedAuth) {
             return cachedAuth;
         }
@@ -56,35 +67,45 @@ export default class AsapRequest {
             audience: this.asapJwtAud,
             algorithm: 'RS256',
             keyid: this.asapJwtKid,
-            expiresIn: 60 * 60, // 1 hour
+            expiresIn: 60 * 60 // 1 hour
         });
 
         this.asapCache.set('asap', auth);
+
         return auth;
     }
 
+    /**
+     * Posts a json to the specified url.
+     * @param url the url.
+     * @param body the body to add.
+     */
     async postJson(url: string, body: unknown): Promise<CancelableRequest> {
         const response = await got.post(url, {
             headers: {
-                Authorization: `Bearer ${this.authToken()}`,
+                Authorization: `Bearer ${this.authToken()}`
             },
             json: body,
             responseType: 'json',
             timeout: this.requestTimeout,
-            retry: this.requestRetryCount,
+            retry: this.requestRetryCount
         });
 
         return response.body;
     }
 
+    /**
+     * Gets a json from url.
+     * @param url the url to use.
+     */
     async getJson(url: string): Promise<CancelableRequest> {
         const response = await got.get(url, {
             headers: {
-                Authorization: `Bearer ${this.authToken()}`,
+                Authorization: `Bearer ${this.authToken()}`
             },
             responseType: 'json',
             timeout: this.requestTimeout,
-            retry: this.requestRetryCount,
+            retry: this.requestRetryCount
         });
 
         return response.body;

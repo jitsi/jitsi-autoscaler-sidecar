@@ -1,0 +1,5 @@
+jitsi-autoscaler-sidecar (0.0.1-1) unstable; urgency=medium
+
+  * Initial release. Build from git: 94c7b78
+
+ -- Jitsi Team <dev@jitsi.org>  Wed, 1 Jun 2023 12:15:00 +0000

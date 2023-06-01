@@ -1,0 +1,15 @@
+[Unit]
+Description=jitsi-autoscaler-sidecar node system service
+
+[Service]
+EnvironmentFile=/etc/jitsi/autoscaler-sidecar/config
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node /usr/share/jitsi-autoscaler-sidecar/app.js
+Type=simple
+User=autoscaler-sidecar
+Group=jitsi
+Restart=always
+SyslogIdentifier=autoscaler-sidecar
+
+[Install]
+WantedBy=multi-user.target

@@ -22,22 +22,24 @@ const env = envalid.cleanEnv(process.env, {
     INSTANCE_TYPE: envalid.str(),
     INSTANCE_METADATA: envalid.json({ default: '{}' }),
     ASAP_SIGNING_KEY_FILE: envalid.str(),
-    ASAP_JWT_KID: envalid.str(),
+    ASAP_JWT_KID: envalid.str()
 });
 
 if (env.ENABLE_REPORT_STATS) {
     if (!env.STATS_RETRIEVE_URL || !env.STATS_REPORT_URL) {
-        throw 'Stats reporting requires missing env vars: STATS_RETRIEVE_URL and STATS_REPORT_URL';
+        throw new Error('Stats reporting requires missing env vars: STATS_RETRIEVE_URL and STATS_REPORT_URL');
     }
 }
 
 export default {
     HTTPServerPort: env.PORT,
     LogLevel: env.LOG_LEVEL,
+
     // number of seconds to wait between polling for shutdown
     ShutdownPollingInterval: env.SHUTDOWN_POLLING_INTERVAL,
     PollingURL: env.POLLING_URL,
     StatusURL: env.STATUS_URL,
+
     // number of seconds to wait before polling for stats
     StatsPollingInterval: env.STATS_POLLING_INTERVAL,
     EnableReportStats: env.ENABLE_REPORT_STATS,
@@ -52,5 +54,5 @@ export default {
     AsapSigningKeyFile: env.ASAP_SIGNING_KEY_FILE,
     AsapJwtKid: env.ASAP_JWT_KID,
     AsapJwtIss: env.ASAP_JWT_ISS,
-    AsapJwtAud: env.ASAP_JWT_AUD,
+    AsapJwtAud: env.ASAP_JWT_AUD
 };

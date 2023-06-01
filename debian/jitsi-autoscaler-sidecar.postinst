@@ -66,49 +66,13 @@ case "$1" in
         fi
         JVB_HOSTNAME=$(echo "$RET" | xargs echo -n)
 
-        db_get jitsi-autoscaler-sidecar/kid || true
-        CUSTOM_KID=$RET
-
-        db_get jitsi-autoscaler-sidecar/instance-id || true
-        CUSTOM_INSTANCE_ID=$RET
-
-        db_get jitsi-autoscaler-sidecar/instance-type || true
-        CUSTOM_INSTANCE_TYPE=$RET
-
-        db_get jitsi-autoscaler-sidecar/polling-url || true
-        CUSTOM_POLLING_URL=$RET
-
-        db_get jitsi-autoscaler-sidecar/status-url || true
-        CUSTOM_STATUS_URL=$RET
-
+        # some defaults, anyone can change those later in the config
         CURRENT_DATE=$(date '+%Y-%m-%d')
         ASAP_JWT_KID="jitsi/jwt-${CURRENT_DATE}"
         INSTANCE_ID="$(hostname -s)"
         INSTANCE_TYPE="JVB"
         POLLING_URL="http://localhost:3000/sidecar/poll"
         STATUS_URL="http://localhost:3000/sidecar/status"
-
-        if [ ! -z "${CUSTOM_KID}" ]; then
-            ASAP_JWT_KID="${CUSTOM_KID}"
-            # Let's reset the values so we don't get them on next update
-            db_reset autoscaler-sidecar/kid
-        fi
-        if [ ! -z "${CUSTOM_INSTANCE_ID}" ]; then
-            INSTANCE_ID="${CUSTOM_INSTANCE_ID}"
-            db_reset autoscaler-sidecar/instance-id
-        fi
-        if [ ! -z "${CUSTOM_INSTANCE_TYPE}" ]; then
-            INSTANCE_TYPE="${CUSTOM_INSTANCE_TYPE}"
-            db_reset autoscaler-sidecar/instance-type
-        fi
-        if [ ! -z "${CUSTOM_POLLING_URL}" ]; then
-            POLLING_URL="${CUSTOM_POLLING_URL}"
-            db_reset autoscaler-sidecar/pooling-url
-        fi
-        if [ ! -z "${CUSTOM_STATUS_URL}" ]; then
-            STATUS_URL="${CUSTOM_STATUS_URL}"
-            db_reset autoscaler-sidecar/status-url
-        fi
 
         # and we're done with debconf
         db_stop

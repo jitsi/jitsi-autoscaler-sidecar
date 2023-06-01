@@ -4,7 +4,7 @@
 #export DEB_VERBOSE_ALL=true
 
 %:
-	dh $@
+	dh $@ --with=systemd
 
 override_dh_clean:
 	rm -rf dist
@@ -18,3 +18,5 @@ override_dh_auto_install:
 	dh_auto_install
 	dh_installsystemd --restart-after-upgrade
 
+override_dh_systemd_start:
+	dh_systemd_start --no-start

@@ -59,14 +59,6 @@ case "$1" in
         # loading debconf
         . /usr/share/debconf/confmodule
 
-        # try to get host from jitsi-videobridge
-        db_get jitsi-videobridge/jvb-hostname
-        if [ -z "$RET" ] ; then
-            RET="jitsi-meet.example.com"
-            echo "Warning! Fallback to default jitsi-meet FQN:${RET}"
-        fi
-        JVB_HOSTNAME=$(echo "$RET" | xargs echo -n)
-
         # some defaults, anyone can change those later in the config
         CURRENT_DATE=$(date '+%Y-%m-%d')
         ASAP_JWT_KID="jitsi/jwt-${CURRENT_DATE}"

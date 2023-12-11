@@ -10,4 +10,7 @@ fi
 
 SCRIPT_SRC=$(dirname "${BASH_SOURCE[0]}")
 
-node $SCRIPT_SRC/../dist/jwt.js
+JWT_JS="$SCRIPT_SRC/../jwt.js"
+[ -d "$SCRIPT_SRC/../dist" ] && JWT_JS="$SCRIPT_SRC/../dist/jwt.js"
+
+node $JWT_JS

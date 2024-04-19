@@ -65,6 +65,7 @@ case "$1" in
         INSTANCE_TYPE="JVB"
         POLLING_URL="http://localhost:3000/sidecar/poll"
         STATUS_URL="http://localhost:3000/sidecar/status"
+        SHUTDOWN_URL="http://localhost:3000/sidecar/shutdown"
 
         # and we're done with debconf
         db_stop
@@ -99,6 +100,7 @@ case "$1" in
             sed -i s#INSTANCE_TYPE=#INSTANCE_TYPE=${INSTANCE_TYPE}#g $SIDECAR_CONFIG
             sed -i s#POLLING_URL=#POLLING_URL=${POLLING_URL}#g $SIDECAR_CONFIG
             sed -i s#STATUS_URL=#STATUS_URL=${STATUS_URL}#g $SIDECAR_CONFIG
+            sed -i s#SHUTDOWN_URL=#SHUTDOWN_URL=${SHUTDOWN_URL}#g $SIDECAR_CONFIG
         fi
     ;;
 

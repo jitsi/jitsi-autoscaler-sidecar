@@ -55,16 +55,18 @@ export default class AutoscalePoller {
     /**
      * Reports shutdown status by sending a json.
      */
-    async reportShutdown(): Promise<void> {
+    async reportShutdown(): Promise<boolean> {
         try {
             if (!this.shutdownUrl) {
                 throw('No shutdown URL configured');
             }
             await this.asapRequest.postJson(this.shutdownUrl, this.instanceDetails);
+            return true;
         } catch (err) {
             logger.error('Error sending shutdown report', { err,
                 traceback: err.traceback });
         }
+        return false;
     }
 
     /**

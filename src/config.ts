@@ -15,6 +15,7 @@ const env = envalid.cleanEnv(process.env, {
     ASAP_JWT_AUD: envalid.str({ default: 'jitsi-autoscaler' }),
     ENABLE_REPORT_STATS: envalid.bool({ default: false }),
     POLLING_URL: envalid.str(),
+    SHUTDOWN_URL: envalid.str(),
     STATUS_URL: envalid.str(),
     STATS_RETRIEVE_URL: envalid.str({ default: '' }),
     STATS_REPORT_URL: envalid.str({ default: '' }),
@@ -37,7 +38,11 @@ export default {
 
     // number of seconds to wait between polling for shutdown
     ShutdownPollingInterval: env.SHUTDOWN_POLLING_INTERVAL,
+    // url for reporting final shutdown
+    ShutdownURL: env.SHUTDOWN_URL,
+    // url to poll for server commands
     PollingURL: env.POLLING_URL,
+    // url to report status and stats
     StatusURL: env.STATUS_URL,
 
     // number of seconds to wait before polling for stats

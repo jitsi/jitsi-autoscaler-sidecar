@@ -35,6 +35,7 @@ const autoscalePoller = new Poller({
     pollUrl: config.PollingURL,
     statusUrl: config.StatusURL,
     statsUrl: config.StatsReportURL,
+    shutdownUrl: config.ShutdownURL,
     instanceDetails,
     asapRequest
 });
@@ -52,6 +53,7 @@ let statsReport: StatsReport;
 
 let reconfigureLock = false;
 let shutdownLock = false;
+let shutdownReported = false;
 
 interface JibriMetadata {
     [key: string]: string;
@@ -90,6 +92,21 @@ async function jibriStateWebhook(req: Request, res: Response) {
     res.send('{"status":"OK"}');
 }
 
+/**
+ * The hook to report final shutdown to server
+ *
+ * @param req the request.
+ * @param res the response.
+ */
+async function instanceShutdownWebhook(req: Request, res: Response) {
+    // update global stats report with
+    if (!shutdownReported) {
+        await autoscalePoller.reportShutdown();
+        res.status(200);
+        res.send('{"status":"OK"}');    
+        shutdownReported = true;
+    }
+}
 /**
  * Polls stats every 1 second.
  */
@@ -178,6 +195,14 @@ app.use(bodyParser.json());
 
 app.get('/health', (req: express.Request, res: express.Response) => {
     res.send('healthy!');
+});
+
+app.post('/hook/v1/shutdown', async (req, res, next) => {
+    try {
+        await instanceShutdownWebhook(req, res);
+    } catch (err) {
+        next(err);
+    }
 });
 
 app.post('/hook/v1/status', async (req, res, next) => {

@@ -16,6 +16,7 @@ export interface AutoscalePollerOptions {
     pollUrl: string;
     statusUrl: string;
     statsUrl: string;
+    shutdownUrl: string;
     instanceDetails: InstanceDetails;
     asapRequest: AsapRequest;
 }
@@ -33,6 +34,7 @@ export default class AutoscalePoller {
     private pollUrl: string;
     private statusUrl: string;
     private statsUrl: string;
+    private shutdownUrl: string;
     private asapRequest: AsapRequest;
 
     /**
@@ -43,10 +45,23 @@ export default class AutoscalePoller {
         this.pollUrl = options.pollUrl;
         this.statusUrl = options.statusUrl;
         this.statsUrl = options.statsUrl;
+        this.shutdownUrl = options.shutdownUrl;
         this.instanceDetails = options.instanceDetails;
         this.asapRequest = options.asapRequest;
 
         this.pollWithStats = this.pollWithStats.bind(this);
+    }
+
+    /**
+     * Reports shutdown status by sending a json.
+     */
+    async reportShutdown(): Promise<void> {
+        try {
+            await this.asapRequest.postJson(this.shutdownUrl, this.instanceDetails);
+        } catch (err) {
+            logger.error('Error sending shutdown report', { err,
+                traceback: err.traceback });
+        }
     }
 
     /**

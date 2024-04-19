@@ -15,7 +15,7 @@ const env = envalid.cleanEnv(process.env, {
     ASAP_JWT_AUD: envalid.str({ default: 'jitsi-autoscaler' }),
     ENABLE_REPORT_STATS: envalid.bool({ default: false }),
     POLLING_URL: envalid.str(),
-    SHUTDOWN_URL: envalid.str(),
+    SHUTDOWN_URL: envalid.str({ default: '' }),
     STATUS_URL: envalid.str(),
     STATS_RETRIEVE_URL: envalid.str({ default: '' }),
     STATS_REPORT_URL: envalid.str({ default: '' }),

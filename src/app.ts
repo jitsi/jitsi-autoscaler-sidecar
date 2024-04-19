@@ -12,6 +12,8 @@ import StatsReporter, { StatsReport } from './stats_reporter';
 const jwtSigningKey = fs.readFileSync(config.AsapSigningKeyFile);
 
 const metadata = <unknown>config.InstanceMetadata;
+// instanceId represents an instance, container or job id
+// metadata.hostId should reflect underlying cloud instance id 
 const instanceDetails = <InstanceDetails>{
     instanceId: config.InstanceId,
     instanceType: config.InstanceType,
@@ -24,11 +26,13 @@ const commandHandler = new CommandHandler({
     reconfigureScript: config.ReconfigureScript
 });
 
+// time out requests
 const asapRequest = new AsapRequest({
     signingKey: jwtSigningKey,
     asapJwtIss: config.AsapJwtIss,
     asapJwtAud: config.AsapJwtAud,
-    asapJwtKid: config.AsapJwtKid
+    asapJwtKid: config.AsapJwtKid,
+    requestTimeout: Math.min(3*1000, Math.floor((config.ShutdownPollingInterval * 1000)/3)),
 });
 
 const autoscalePoller = new Poller({

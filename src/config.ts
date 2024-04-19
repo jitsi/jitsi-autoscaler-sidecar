@@ -38,10 +38,13 @@ export default {
 
     // number of seconds to wait between polling for shutdown
     ShutdownPollingInterval: env.SHUTDOWN_POLLING_INTERVAL,
+
     // url for reporting final shutdown
     ShutdownURL: env.SHUTDOWN_URL,
+
     // url to poll for server commands
     PollingURL: env.POLLING_URL,
+
     // url to report status and stats
     StatusURL: env.STATUS_URL,
 

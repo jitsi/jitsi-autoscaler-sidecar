@@ -100,8 +100,13 @@ async function jibriStateWebhook(req: Request, res: Response) {
  */
 async function instanceShutdownWebhook(req: Request, res: Response) {
     // update global stats report with
-    if (!shutdownReported) {
+    if (shutdownReported) {
+        res.status(200);
+        shutdownReported = true;
+        res.send('{"status":"OK", "message":"Already reported shutdown"}');
+    } else {
         const ret = await autoscalePoller.reportShutdown();
+
         if (ret) {
             res.status(200);
             shutdownReported = true;
@@ -109,13 +114,10 @@ async function instanceShutdownWebhook(req: Request, res: Response) {
         } else {
             res.status(500);
             res.send('{"status":"FAILED"}');
-       }
-    } else {
-        res.status(200);
-        shutdownReported = true;
-        res.send('{"status":"OK", "message":"Already reported shutdown"}');
+        }
     }
 }
+
 /**
  * Polls stats every 1 second.
  */

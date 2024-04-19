@@ -58,14 +58,16 @@ export default class AutoscalePoller {
     async reportShutdown(): Promise<boolean> {
         try {
             if (!this.shutdownUrl) {
-                throw({'code':'NO_SHUTDOWN_URL','message': 'No shutdown URL configured'});
+                throw new Error('No shutdown URL configured');
             }
             await this.asapRequest.postJson(this.shutdownUrl, this.instanceDetails);
+
             return true;
         } catch (err) {
             logger.error('Error sending shutdown report', { err,
                 traceback: err.traceback });
         }
+
         return false;
     }
 

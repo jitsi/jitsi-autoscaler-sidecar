@@ -15,6 +15,17 @@ echo "==================================================================="
 SCRIPT_FOLDER=$(dirname "$0")
 cd "$SCRIPT_FOLDER/.."
 
+set +x
+# make sure NVM is setup correctly
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+nvm install
+nvm use
+set -x
+node -v
+npm -v
+
+
 MVNVER=$(jq -r '.version' package.json | cut -d '.' -f 1,2)
 TAG_NAME="v${MVNVER}"
 

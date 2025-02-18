@@ -9,7 +9,7 @@
   "main": "src/index.js",
   "private": true,
   "engines": {
-    "node": ">=10"
+    "node": ">=20"
   },
   "dependencies": {
     "@types/express": "^4.17.7",

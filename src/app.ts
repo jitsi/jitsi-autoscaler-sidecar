@@ -100,6 +100,7 @@ async function jibriStateWebhook(req: Request, res: Response) {
  */
 async function instanceShutdownWebhook(req: Request, res: Response) {
     // update global stats report with
+    logger.info('Received shutdown completed webhook');
     if (shutdownReported) {
         res.status(200);
         shutdownReported = true;
@@ -224,6 +225,6 @@ app.post('/hook/v1/status', async (req, res, next) => {
     }
 });
 
-app.listen(config.HTTPServerPort, () => {
+app.listen(config.HTTPServerPort, '0.0.0.0', () => {
     logger.info(`...listening on :${config.HTTPServerPort}`);
 });

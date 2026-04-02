@@ -1,4 +1,4 @@
-
+import './slowbuffer-polyfill';
 import * as dotenv from 'dotenv';
 import envalid from 'envalid';
 import fs from 'fs';

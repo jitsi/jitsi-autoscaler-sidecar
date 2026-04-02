@@ -1,3 +1,4 @@
+import './slowbuffer-polyfill';
 import bodyParser from 'body-parser';
 import express, { Request, Response } from 'express';
 import fs from 'fs';

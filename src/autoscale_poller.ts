@@ -2,9 +2,12 @@ import AsapRequest from './asap_request';
 import logger from './logger';
 import { StatsReport } from './stats_reporter';
 
+// instanceId should  match either the instance or a container or job id
+// hostId may match the underlying host instance id
 export interface InstanceDetails {
     instanceId: string;
     instanceType: string;
+    hostId?: string;
     cloud?: string;
     region?: string;
     group?: string;

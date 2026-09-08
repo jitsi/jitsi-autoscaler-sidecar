@@ -19,6 +19,17 @@ const instanceDetails = <InstanceDetails>{
     ...<InstanceDetails>metadata
 };
 
+// The autoscaler rejects every report that does not carry a non-empty instanceId and group
+// (400) and every report for a group it does not manage (404), so a sidecar without a group
+// can never do anything useful. Refuse to start rather than poll forever into a 400.
+if (typeof instanceDetails.instanceId !== 'string' || instanceDetails.instanceId.trim() === '') {
+    throw new Error('INSTANCE_ID must be a non-empty string');
+}
+if (typeof instanceDetails.group !== 'string' || instanceDetails.group.trim() === '') {
+    throw new Error('INSTANCE_METADATA must include a non-empty "group" '
+        + '(the autoscaler group this instance belongs to)');
+}
+
 const commandHandler = new CommandHandler({
     gracefulScript: config.GracefulShutdownScript,
     terminateScript: config.TerminateScript,

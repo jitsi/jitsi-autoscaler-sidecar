@@ -1,4 +1,4 @@
-import AsapRequest from './asap_request';
+import AsapRequest, { AutoscalerRequestError } from './asap_request';
 import logger from './logger';
 import { StatsReport } from './stats_reporter';
 
@@ -53,6 +53,39 @@ export default class AutoscalePoller {
     }
 
     /**
+     * Logs a failed autoscaler request. The autoscaler rejects reports that do not identify the instance and
+     * its group (400) and reports for a group it does not know (404); both indicate a sidecar
+     * misconfiguration rather than a transient failure, so they are called out explicitly.
+     * @param message the log message.
+     * @param err the error.
+     * @param postURL the url that was requested.
+     */
+    private logRequestError(message: string, err: unknown, postURL: string): void {
+        if (err instanceof AutoscalerRequestError) {
+            const details = {
+                statusCode: err.statusCode,
+                errors: AutoscalerRequestError.describe(err.body),
+                postURL,
+                group: this.instanceDetails.group,
+                instanceId: this.instanceDetails.instanceId
+            };
+
+            if (err.statusCode === 404) {
+                logger.error(`${message}: the autoscaler does not know group `
+                    + `'${this.instanceDetails.group}'; check INSTANCE_METADATA.group and the autoscaler URL`, details);
+            } else if (err.statusCode === 400) {
+                logger.error(`${message}: the autoscaler rejected the report`, details);
+            } else {
+                logger.error(message, details);
+            }
+
+            return;
+        }
+        logger.error(message, { err,
+            postURL });
+    }
+
+    /**
      * Reports shutdown status by sending a json.
      */
     async reportShutdown(): Promise<boolean> {
@@ -64,8 +97,7 @@ export default class AutoscalePoller {
 
             return true;
         } catch (err) {
-            logger.error('Error sending shutdown report', { err,
-                traceback: err.traceback });
+            this.logRequestError('Error sending shutdown report', err, this.shutdownUrl);
         }
 
         return false;
@@ -79,8 +111,7 @@ export default class AutoscalePoller {
         try {
             await this.asapRequest.postJson(this.statsUrl, statsReport);
         } catch (err) {
-            logger.error('Error sending stats report', { err,
-                traceback: err.traceback });
+            this.logRequestError('Error sending stats report', err, this.statsUrl);
         }
     }
 
@@ -121,8 +152,7 @@ export default class AutoscalePoller {
                 }
             }
         } catch (err) {
-            logger.error('Error polling the autoscaler for system status', { err,
-                postURL });
+            this.logRequestError('Error polling the autoscaler for system status', err, postURL);
         }
 
         return status;

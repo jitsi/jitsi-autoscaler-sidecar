@@ -1,6 +1,74 @@
-import got, { CancelableRequest } from 'got';
+import got, { CancelableRequest, HTTPError } from 'got';
 import { sign } from 'jsonwebtoken';
 import NodeCache from 'node-cache';
+
+/**
+ * Error raised when the autoscaler answers with a non-2xx status. Carries the status code and the
+ * parsed response body (the autoscaler returns `{ errors: [...] }` for rejected requests), so callers
+ * can log the actual reason instead of only the status code.
+ */
+export class AutoscalerRequestError extends Error {
+    readonly statusCode: number;
+    readonly body: unknown;
+    readonly url: string;
+
+    /**
+     * Constructs the error.
+     * @param url the url that was requested.
+     * @param statusCode the http status code.
+     * @param body the parsed response body.
+     */
+    constructor(url: string, statusCode: number, body: unknown) {
+        super(`Autoscaler responded ${statusCode} for ${url}: ${AutoscalerRequestError.describe(body)}`);
+        this.name = 'AutoscalerRequestError';
+        this.url = url;
+        this.statusCode = statusCode;
+        this.body = body;
+    }
+
+    /**
+     * Renders one entry of the `errors` array as a string.
+     * @param e the entry.
+     */
+    private static stringify(e: unknown): string {
+        if (typeof e === 'string') {
+            return e;
+        }
+
+        return JSON.stringify(e);
+    }
+
+    /**
+     * Renders the `errors` array (or the whole body) as a short string for log messages.
+     * @param body the response body.
+     */
+    static describe(body: unknown): string {
+        const maybe = <{ errors?: unknown }>body;
+        const errors = maybe && typeof maybe === 'object' ? maybe.errors : undefined;
+
+        if (Array.isArray(errors)) {
+            return errors.map(AutoscalerRequestError.stringify).join('; ');
+        }
+        if (body === undefined || body === null || body === '') {
+            return '(empty body)';
+        }
+
+        return typeof body === 'string' ? body : JSON.stringify(body);
+    }
+
+    /**
+     * Wraps a got error into an AutoscalerRequestError when it carries an HTTP response.
+     * @param url the url that was requested.
+     * @param err the error thrown by got.
+     */
+    static fromError(url: string, err: unknown): unknown {
+        if (err instanceof HTTPError) {
+            return new AutoscalerRequestError(url, err.response.statusCode, err.response.body);
+        }
+
+        return err;
+    }
+}
 
 export interface AsapRequestOptions {
     signingKey: Buffer;
@@ -81,17 +149,21 @@ export default class AsapRequest {
      * @param body the body to add.
      */
     async postJson(url: string, body: unknown): Promise<CancelableRequest> {
-        const response = await got.post(url, {
-            headers: {
-                Authorization: `Bearer ${this.authToken()}`
-            },
-            json: body,
-            responseType: 'json',
-            timeout: this.requestTimeout,
-            retry: this.requestRetryCount
-        });
+        try {
+            const response = await got.post(url, {
+                headers: {
+                    Authorization: `Bearer ${this.authToken()}`
+                },
+                json: body,
+                responseType: 'json',
+                timeout: this.requestTimeout,
+                retry: this.requestRetryCount
+            });
 
-        return response.body;
+            return response.body;
+        } catch (err) {
+            throw AutoscalerRequestError.fromError(url, err);
+        }
     }
 
     /**
@@ -99,15 +171,19 @@ export default class AsapRequest {
      * @param url the url to use.
      */
     async getJson(url: string): Promise<CancelableRequest> {
-        const response = await got.get(url, {
-            headers: {
-                Authorization: `Bearer ${this.authToken()}`
-            },
-            responseType: 'json',
-            timeout: this.requestTimeout,
-            retry: this.requestRetryCount
-        });
+        try {
+            const response = await got.get(url, {
+                headers: {
+                    Authorization: `Bearer ${this.authToken()}`
+                },
+                responseType: 'json',
+                timeout: this.requestTimeout,
+                retry: this.requestRetryCount
+            });
 
-        return response.body;
+            return response.body;
+        } catch (err) {
+            throw AutoscalerRequestError.fromError(url, err);
+        }
     }
 }

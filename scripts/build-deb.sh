@@ -6,7 +6,7 @@ set -e
 # Make sure you have the following environment variables set, example:
 # export DEBFULLNAME="Jitsi Team"
 # export DEBEMAIL="dev@jitsi.org"
-# You need package devscripts installed (command dch), dh-systemd.
+# You need package devscripts installed (command dch).
 
 echo "==================================================================="
 echo "   Building DEB packages...   "

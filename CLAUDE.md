@@ -12,7 +12,7 @@ jitsi-autoscaler-sidecar is a Node.js/TypeScript sidecar service that runs along
 - **Lint**: `npm run lint` (ESLint with auto-fix)
 - **Dev mode**: `npm run watch` (concurrent tsc watch + nodemon on `dist/app.js`)
 - **Start**: `npm run start` (runs `node dist/app.js`)
-- **Tests**: None exist. `npm test` is a stub that exits with error.
+- **Tests**: `npm test` builds, then runs the `node:test` tests in `test/` (plain JS against `dist/`, Node 18.13+). The installed `@types/node` is v14, so the tests are not written in TypeScript.
 - **Debian package**: `scripts/build-deb.sh`
 
 CI only runs linting on PRs (no build or test step).

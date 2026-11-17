@@ -210,10 +210,11 @@ export default class StatsReporter {
      * Records a failed retrieval. The local service is often not up yet (for example just after a boot), so
      * the first failure of a series is a warning, and repeats are summarized instead of logged each time.
      * A series that lasts longer than failureErrorAfterMs logs one error.
-     * @param err the error.
+     * @param err the error. A value that is not an object (for example a thrown string) is logged as the message.
      */
-    private onRetrieveFailure(err: RetrieveError): void {
+    private onRetrieveFailure(err: unknown): void {
         const now = this.now();
+        const error: RetrieveError = typeof err === 'object' && err !== null ? err : { message: String(err) };
 
         this.consecutiveFailures++;
         if (this.consecutiveFailures === 1) {
@@ -223,10 +224,11 @@ export default class StatsReporter {
         const failingForMs = now - this.failingSince;
         const details = {
             url: this.retrieveUrl,
-            name: err?.name,
-            code: err?.code,
-            statusCode: err?.statusCode,
-            message: err?.message?.slice(0, MAX_LOGGED_ERROR_MESSAGE_LENGTH),
+            name: error.name,
+            code: error.code,
+            statusCode: error.statusCode,
+            message: error.message === undefined
+                ? undefined : String(error.message).slice(0, MAX_LOGGED_ERROR_MESSAGE_LENGTH),
             consecutiveFailures: this.consecutiveFailures,
             failingForMs
         };

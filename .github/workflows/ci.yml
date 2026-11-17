@@ -10,7 +10,7 @@ jobs:
     - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5  # v2
     - uses: actions/setup-node@f1f314fca9dfce2769ece7d933488f076716723e  # v1
       with:
-        node-version: '16.x'
+        node-version: '22.x'
     - run: npm install
     - name: Check git status
       run: git status
@@ -19,3 +19,4 @@ jobs:
     - name: Check if the git repository is clean
       run: exit $( git status --porcelain --untracked-files=no | head -255 | wc -l )
     - run: npm run lint
+    - run: npm test

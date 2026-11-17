@@ -4,6 +4,18 @@ const { afterEach, before, beforeEach, describe, it, mock } = require('node:test
 const URL = 'http://localhost:8080/colibri/stats';
 const RETRY_MESSAGE = 'Failed to retrieve stats';
 
+/**
+ * Makes the fake getJson throw a value that is not an Error.
+ */
+class Thrown {
+    /**
+     * @param value the value to throw.
+     */
+    constructor(value) {
+        this.value = value;
+    }
+}
+
 describe('StatsReporter retrieval failures', () => {
     let StatsReporter;
     let logger;
@@ -52,6 +64,9 @@ describe('StatsReporter retrieval failures', () => {
         getJson: async () => {
             if (result instanceof Error) {
                 throw result;
+            }
+            if (result instanceof Thrown) {
+                throw result.value;
             }
 
             return result;
@@ -153,6 +168,26 @@ describe('StatsReporter retrieval failures', () => {
         assert.equal(at('error').length, 1);
     });
 
+    it('starts the summary interval again after the error', async () => {
+        result = refused();
+        const reporter = createReporter();
+
+        await poll(reporter);
+        for (let i = 0; i < 4; i++) {
+            await poll(reporter, 60_000);
+        }
+        assert.equal(at('warn').length, 5);
+
+        await poll(reporter, 60_000);
+        assert.equal(at('error').length, 1);
+
+        // The error counts as the last warning, so the next summary comes one interval after it.
+        await poll(reporter, 59_000);
+        assert.equal(at('warn').length, 5);
+        await poll(reporter, 1_000);
+        assert.equal(at('warn').length, 6);
+    });
+
     it('logs an error again for a new long series after a recovery', async () => {
         const reporter = createReporter();
 
@@ -215,6 +250,16 @@ describe('StatsReporter retrieval failures', () => {
         assert.equal(at('warn').length, 1);
         assert.equal(at('warn')[0].meta.message, 'Empty stats response');
         assert.equal(at('error').length, 0);
+    });
+
+    it('logs a thrown value that is not an Error as the message', async () => {
+        result = new Thrown('local service is not ready');
+        await poll(createReporter());
+
+        const { meta } = at('warn')[0];
+
+        assert.equal(meta.message, 'local service is not ready');
+        assert.equal(meta.name, undefined);
     });
 
     it('logs the status code of an HTTP error and cuts a long message', async () => {
